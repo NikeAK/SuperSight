@@ -8,9 +8,11 @@
 |----------------------------------------------------------------|:---------------:|
 | Многопоточность                                                |        ✅       |
 | Генерация аккаунтов SuperSight с почтой MailTM                 |        ✅       |
+| Привязка Twitter                                               |        ✅       |
+| Генерация кошелька EVM (чуть позже пригодится)                 |        ✅       |
 | Daily Log-in                                                   |        ✅       |
-| Analyzer token / wallet                                        |        ✅       |
-| Экспорт аккаунтов в txt, excel                                 |        ✅       |
+| Analyzer случайных token / wallet                              |        ✅       |
+| Экспорт аккаунтов из БД в txt, excel                           |        ✅       |
 
 ## [⚙️Настройки](https://github.com/NikeAK/SuperSight/blob/main/data/config.py)
 | Настройка             | Описание                                                        |
