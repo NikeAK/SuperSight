@@ -1,0 +1,10 @@
+inquirer==3.2.4
+web3==6.16.0
+loguru==0.7.2
+pyfiglet==1.0.2
+pandas==2.2.2
+curl_cffi
+faker==24.8.0
+sqlalchemy==2.0.29
+better_proxy==1.1.5
+tweepy-self==1.9.0
