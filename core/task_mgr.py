@@ -67,10 +67,10 @@ class TaskManager:
                     self.tokens.append(token)
                     return 'noproxy'
                 t_proxy = self.proxies.pop(0)
+                proxy = Proxy.from_str(t_proxy if t_proxy.startswith('http://') else 'http://'+t_proxy).as_url
 
-            if await check_proxy(t_proxy):
+            if await check_proxy(proxy):
                 logger.success(f"Поток {thread} | <g>GoodProxy</g> {t_proxy}")
-                proxy = Proxy.from_str(t_proxy if t_proxy.startswith('http://') else 'http://'+proxy).as_url
             else:
                 logger.error(f"Поток {thread} | <r>BadProxy</r> {t_proxy}")
                 delete_str_file('data/proxy.txt', t_proxy)
