@@ -159,7 +159,7 @@ class SuperSight:
         
         response = await self.session.post("https://supersight.xyz/api/auth/callback/email-login?", data=paylaod)
         if response.status_code == 200:
-            logger.success(f"Поток {self.thread} | Успешно вошел в аккаунт [{account.email}]!")
+            logger.info(f"Поток {self.thread} | Успешно вошел в аккаунт [{account.email}]!")
         else:
             logger.error(f"Поток {self.thread} | Ошибка при входе в аккаунт [{account.email}]!")
     
