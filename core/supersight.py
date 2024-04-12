@@ -4,6 +4,7 @@ import twitter
 import random
 
 from faker import Faker
+from pydantic import ValidationError
 from curl_cffi.requests import AsyncSession
 
 from core.database.database import MainDB
@@ -34,7 +35,7 @@ class SuperSight:
         }
         self.session = AsyncSession(impersonate="chrome120", proxy=self.proxy, headers=headers, verify=False)
 
-    async def registration(self, twitter_token: str) -> tuple[str, str]:
+    async def registration(self) -> tuple[str, str]:
         fake = Faker()
 
         while True:
@@ -53,7 +54,7 @@ class SuperSight:
             else:
                 logger.success(f"Поток {self.thread} | Зарегистрировал почту {email}:{password}")
                 break
-
+        
         await self.session.post('https://seashell-app-esr9j.ondigitalocean.app/api/v1/auth/send-otp', json = {"email":email})
 
         msg = await mailtm.search_message('postmaster@supersight.xyz')
@@ -78,32 +79,49 @@ class SuperSight:
 
         response = await self.session.post('https://supersight.xyz/api/auth/callback/email-signup?', data=payload)
 
-        if response.status_code == 200:
-            logger.success(f"Поток {self.thread} | Регистрация прошла успешно [{email}]!")
-            await asyncio.sleep(3)
-            await self.take_free_orb()
-            await self.bind_twitter(twitter_token)
-        else:
+        if response.status_code != 200:
             logger.error(f"Поток {self.thread} | Ошибка при регистрации")
+            return None
+
+        logger.success(f"Поток {self.thread} | Зарегистрировал аккаунта SuperSight - [{email}]!")
+
+        await asyncio.sleep(3)
+        await self.take_free_orb()
 
         return email, password
     
-    async def bind_twitter(self, token: str):
-        response = await self.session.get('https://supersight.xyz/api/profile/twitter/connect')
-        oauth_token = response.json()['data']['url'].split("oauth_token=")[1]
+    async def bind_twitter(self, token: str) -> bool|None:
+        try:
+            response = await self.session.get('https://supersight.xyz/api/profile/twitter/connect')
+            oauth_token = response.json()['data']['url'].split("oauth_token=")[1]
 
-        account = twitter.Account(auth_token=token)
+            account = twitter.Account(auth_token=token)
 
-        async with twitter.Client(account, proxy=self.proxy) as twitter_client:
-            _, redirect_url = await twitter_client.oauth(oauth_token)
+            async with twitter.Client(account, proxy=self.proxy) as twitter_client:
+                await twitter_client.request_user() #Проверка валидности токена
+
+                _, redirect_url = await twitter_client.oauth(oauth_token)
+
+            response = await self.session.get(redirect_url, allow_redirects=False)
+            status = response.headers['Location'].split("status=")[1]
+
+            if status == 'SUCCESS':
+                logger.success(f"Поток {self.thread} | Привязал Twitter к аккаунту!")
+                return True
+            
+            elif status == 'ALREADY_EXISTS':
+                logger.error(f"Поток {self.thread} | Этот Twitter аккаунт уже используется!")
+            
+            else:
+                logger.error(f"Поток {self.thread} | Twitter error: {status}!")
+            
+        except twitter.client.BadToken as error:
+            logger.error(f"Поток {self.thread} | Невалидный TwitterToken: {error}")
+
+        except ValidationError as error:
+            logger.error(f"Поток {self.thread} | Неверный формат TwitterToken: {error}")
         
-        response = await self.session.get(redirect_url)
-        if response.status_code == 200:
-            logger.success(f"Поток {self.thread} | Привязал Twitter")
-            await self.session.get('https://supersight.xyz/profile?status=SUCCESS')
-        else:
-            logger.error(f"Поток {self.thread} | Не удалось привязать Twitter")
-
+        return False
 
     async def take_free_orb(self):
         urls = [
@@ -117,9 +135,9 @@ class SuperSight:
             try:
                 response = await self.session.get(url)
                 if response.json()['statusCode'] == 200:
-                    logger.success(f"Поток {self.thread} | Получил <g>+100</g> Orbs - {url.split('/')[6]}")
+                    logger.success(f"Поток {self.thread} | Получил бонус <g>+100</g> Orbs - {url.split('/')[6]}")
                 else:
-                    raise ValueError("BadStatus - free orbs")
+                    raise ValueError("Bad status_code - free orbs")
             except Exception as error:
                 logger.error(f"Поток {self.thread} | Ошибка при получении бонуса Orbs | {error}")
             else:
@@ -168,7 +186,7 @@ class SuperSight:
             if response.status_code == 200:
                 orbs, crystals = orbs - 30, crystals + 30
                 delay = random.randint(DELAY_ANALYZER[0], DELAY_ANALYZER[1])
-                logger.info(f"Поток {self.thread} | Баланс: <u>{orbs}</u><r>(-30)</r> Orbs, <u>{crystals}</u><g>(+30)</g> Crystals | Analyzer сон {delay}сек.")
+                logger.success(f"Поток {self.thread} | Баланс: <u>{orbs}</u><r>(-30)</r> Orbs, <u>{crystals}</u><g>(+30)</g> Crystals | сон {delay}сек.")
                 await asyncio.sleep(delay)
                 return True
             else:

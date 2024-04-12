@@ -6,6 +6,7 @@ from core.utils import logger
 from core.utils import read_file
 
 from core.database.database import MainDB
+from data.config import BIND_TWITTER
 
 from typing import TYPE_CHECKING
 
@@ -95,11 +96,17 @@ class CLInterface:
 
         token, proxy = len(read_file('data/twitter_token.txt')), len(read_file('data/proxy.txt'))
 
-        if not (0 < token <= proxy):
-            logger.error(f'Проверьте файлы с прокси и токенами. Найдено token - [{token}], proxy - [{proxy}]')
+        if proxy == 0:
+            logger.error(f'Проверьте файл с прокси. Найдено proxy - [{proxy}]')
             return
-        
-        logger.info(f'📥  Загружено token - [{token}], proxy - [{proxy}]\n')
+
+        if BIND_TWITTER:
+            if not (0 < token <= proxy):
+                logger.error(f'Проверьте файлы с токенами. Найдено twitter_token - [{token}]')
+                return
+            logger.info(f'📥  Загружено token - [{token}], proxy - [{proxy}]\n')
+        else:
+            logger.info(f'📥  Загружено proxy - [{proxy}]\n')
 
         while True:
             try:

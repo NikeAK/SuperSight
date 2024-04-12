@@ -2,13 +2,16 @@
 
 REFERRAL_CODE = 'UPPCLY'
 
+BIND_TWITTER = True
 DELAY_ANALYZER = [1, 5]
+
+LOGGER_PROXY = True
 
 #---------------------Export---------------------
 '''
 
 id          - Номер аккаунта в БД
-email       - Адрес электронной почты, также для входа SuperSight
+email       - Почтовый адрес, также для входа SuperSight
 password    - Пароль от почты и SuperSight
 proxy       - Прокси (host://log:pas@ip:port)
 privatekey  - Приватный ключ EVM
